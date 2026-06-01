@@ -24,7 +24,7 @@
     overflow: hidden;
   }
 
-  /* ── Header ── */
+  /* Header */
   .card-header {
     background: linear-gradient(135deg, #1456F0 0%, #0E3FC0 100%);
     padding: 20px 24px 18px;
@@ -45,7 +45,7 @@
     font-weight: 600;
   }
 
-  /* ── Compare strip ── */
+  /* Compare strip */
   .compare-strip {
     background: #f7f9ff;
     border-bottom: 1px solid #e8edff;
@@ -70,7 +70,7 @@
   }
   .compare-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 8px;
   }
   .cmp {
@@ -84,9 +84,11 @@
   .cmp .val { font-size: 18px; font-weight: 700; }
   .cmp.dn .val { color: #e53e3e; }
   .cmp.up .val { color: #0ab44a; }
+  .cmp.q2 { border-color: #ffd899; background: #fffaf0; }
+  .cmp.q2 .val { color: #ff8c00; }
   .cmp .prev { font-size: 10px; color: #bbb; margin-top: 3px; }
 
-  /* ── Data table ── */
+  /* Data table */
   .section { padding: 16px 24px 20px; }
   .table-wrap { overflow-x: auto; }
   table {
@@ -155,11 +157,11 @@
   td.col-max { color: #16a34a !important; font-weight: 700; }
   td.col-min { color: #b91c1c !important; font-weight: 700; }
 
-  /* ── Chart ── */
+  /* Chart */
   .chart-section { padding: 16px 24px 20px; border-top: 1px solid #f0f0f0; }
   .chart-wrap { position: relative; height: 260px; }
 
-  /* ── Divider sections ── */
+  /* Text sections */
   .text-section { padding: 18px 24px 20px; border-top: 8px solid #f0f2f5; }
   .text-section .section-label {
     margin-bottom: 14px;
@@ -219,6 +221,11 @@
         <div class="val">▼ 10.5%</div>
         <div class="prev">143 → 128</div>
       </div>
+      <div class="cmp q2">
+        <div class="lbl">Q2 季度总PC</div>
+        <div class="val">919</div>
+        <div class="prev">4/1 ~ 5/31 累计</div>
+      </div>
     </div>
   </div>
 
@@ -250,8 +257,8 @@
             <td class="g-follow">578</td>
             <td class="g-follow pc-col">128</td>
             <td class="g-new">24.8%</td>
-            <td class="g-new">1.4%</td>
-            <td class="g-new">5.4%</td>
+            <td class="g-new">1.5%</td>
+            <td class="g-new">6.0%</td>
           </tr>
           <tr>
             <td>jacelynlim</td>
@@ -259,8 +266,8 @@
             <td class="g-follow">294</td>
             <td class="g-follow pc-col">51</td>
             <td class="g-new">26.6%</td>
-            <td class="g-new">1.7%</td>
-            <td class="g-new">6.7%</td>
+            <td class="g-new">1.9%</td>
+            <td class="g-new">7.3%</td>
           </tr>
           <tr>
             <td>alvinsim</td>
@@ -268,8 +275,8 @@
             <td class="g-follow">284</td>
             <td class="g-follow pc-col">47</td>
             <td class="g-new">23.1%</td>
-            <td class="g-new">1.0%</td>
-            <td class="g-new">4.2%</td>
+            <td class="g-new">1.1%</td>
+            <td class="g-new">4.7%</td>
           </tr>
           <tr>
             <td>vincentyew</td>
@@ -350,12 +357,11 @@
       <ol>
         <li>梳理转化客服新人入职后的培养流程SOP与checklist</li>
         <li>复盘目前US和MY的业绩及进度，定目标拆任务，冲刺KPI</li>
-        <li>个人完成SIE的第一轮学习</li>
       </ol>
     </div>
   </div>
 
-  <div class="note">跟进量 &amp; 转化率：本周数据（05-25~05-31）</div>
+  <div class="note">跟进量 &amp; 转化率：本周数据（05-25~05-31）｜Q2季度总PC：4/1~5/31累计（外呼+SMS去重）</div>
 
 </div>
 
@@ -363,8 +369,8 @@
 const WEEKS = ['04-20~04-26','04-27~05-03','05-04~05-10','05-11~05-17','05-18~05-24','05-25~05-31'];
 const DATA = {
   eff:  [23.2, 25.9, 27.7, 24.8, 23.5, 24.8],
-  conv: [16.3, 17.7, 17.7, 16.9,  6.9,  5.4],
-  alloc:[ 3.9,  4.6,  4.8,  4.1,  1.7,  1.4],
+  conv: [16.3, 17.7, 17.7, 16.9,  6.9,  6.0],
+  alloc:[ 3.9,  4.6,  4.8,  4.1,  1.7,  1.5],
 };
 
 const DATASETS = [
