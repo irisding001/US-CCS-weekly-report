@@ -1,92 +1,146 @@
 ---
 name: US-CCS-weekly-report
-description: US CCS 团队周报生成器。通过对话逐板块引导用户填写周报内容，最终格式化为飞书消息发送到指定群。当用户提到"周报"、"weekly report"、"CCS 周报"、"填周报"、"写周报"时，必须使用此 skill。
+description: US CCS 团队周报生成器。自动拉取业绩数据，引导用户逐板块填写周报内容，生成 HTML 卡片文件并发送飞书消息。当用户提到"周报"、"weekly report"、"CCS 周报"、"填周报"、"写周报"时，必须使用此 skill。
 ---
 
 # US CCS Weekly Report
 
-引导用户完成四个板块的周报填写，最终发送飞书群消息。
+生成 HTML 周报卡片 + 发送飞书私信（给自己）。
 
-## 工作流程
+## HTML 模板规范
 
-开始时告知用户："开始填写 US CCS 本周周报，共四个板块，我会逐一引导你完成。"
+生成文件命名：`weekly_report_{YYYY-MM-DD}.html`（日期取当周周一）
+保存路径：`C:/Users/irisding/.claude/skills/us-ccs-weekly-performance/`
 
-### 板块一：团队业绩
+### 卡片结构
 
-<!-- TODO: 此板块待嵌入专项 skill，用户确认 skill 名称后更新 -->
+```
+Header：US CCS Weekly Report- Irisding | 日期范围 | Week N
+Compare Strip：与上周对比（总跟进量 / 总有效跟进量 / 总PC 的 ▲▼%）
+数据表格：跟进量（总跟进量、有效跟进量、总PC）+ 新 Leads 转化率（有效跟进率、跟进转化率、有效跟进转化率）
+趋势图：团队近6周转化率趋势（3条折线：有效跟进率 / 有效跟进转化率 / 跟进转化率）
+二、团队运营（团队管理 + 招聘进展）
+三、AI 应用（使用情况 + 应用计划）
+四、下周计划
+```
 
-暂时直接询问用户：
-> "📌 **一、团队业绩**
-> 请填写本周团队业绩数据（如 CSAT、工单量、处理时长等关键指标）："
+### 关键设计细节
 
-### 板块二：团队运营
+- **参考文件**：`C:/Users/irisding/.claude/skills/my-ccs-weekly-performance/preview_card.html`（样式基准）
+- body：`display: flex; justify-content: center; padding: 32px 16px;`
+- 表格第一列（客经名）：`text-align: center`
+- min/max 高亮：**仅字体颜色**，绿色 `#16a34a`，红色 `#b91c1c`，不加背景色填充
+- 总PC列：`pc-col` 橙色列头（`#ff8c00`）
+- 趋势图 Y 轴：`min: 0, max: 35`；3条线颜色：蓝 `#1456F0` / 橙 `#f59e0b` / 绿 `#10b981`
+- 周期格式：`MM-DD~MM-DD`（周一到周日，6 周）
 
-依次询问以下两个子项，每次填完再问下一个：
+### WEEKS 数组规则
 
-1. > "📌 **二、团队运营 — 团队管理**
-   > 本周团队管理事项（如排班调整、培训、问题跟进等）："
-
-2. > "📌 **二、团队运营 — 招聘进展**
-   > 本周招聘进展（如面试安排、offer 情况、岗位状态等）："
-
-### 板块三：AI 应用
-
-依次询问以下两个子项：
-
-1. > "📌 **三、AI 应用 — AI 工具使用情况**
-   > 本周 AI 工具使用情况（工具名称、使用场景、效果等）："
-
-2. > "📌 **三、AI 应用 — AI 应用计划**
-   > 下阶段 AI 应用计划（待探索的工具、自动化方向等）："
-
-### 板块四：下周计划
-
-> "📌 **四、下周计划**
-> 请自由填写下周工作计划："
+每周必须是**周一到周日**，例：
+```javascript
+const WEEKS = ['04-13~04-19','04-20~04-26','04-27~05-03','05-04~05-10','05-11~05-17','05-18~05-24'];
+```
 
 ---
 
-## 汇总与发送
+## 工作流程
 
-四个板块填写完毕后：
+### Step 1：获取认证信息 & 日期范围
 
-1. **展示完整预览**，格式如下：
+询问用户提供：
+- Cookie 字符串（含 `EGG_SESS`、`csrfToken`）
+- CSRF Token
+- uIdToken（BI Dashboard JWT）
+- 确认日期范围（默认上一完整周，周一~周日）
 
+### Step 2：调用 `us-ccs-weekly-performance` skill
+
+执行完整数据拉取流程，获得：
+- 跟进量数据（3人 + 团队合计，含与上周对比）
+- 新 Leads 个人转化率（有效跟进率 / 跟进转化率 / 有效跟进转化率）
+
+### Step 3：收集文字板块（二/三/四）
+
+每次只问一个子项，等用户回复后再继续：
+
+1. **二-团队管理**：出勤、培训、问题跟进等
+2. **二-招聘进展**：面试、offer、岗位状态等
+3. **三-AI 工具使用情况**：工具、场景、效果
+4. **三-AI 应用计划**：下阶段方向
+5. **四-下周计划**：自由填写
+
+用户可随时说"跳过"留空。
+
+### Step 4：生成 HTML 文件
+
+根据上述数据和模板规范，生成完整 HTML 文件：
+- 补充当周和前5周的 DATA 数组（向用户确认历史数据，或从上一份报告沿用）
+- 写入 `weekly_report_{start_date}.html`（保存路径：`C:/Users/irisding/.claude/skills/us-ccs-weekly-performance/`）
+
+### Step 5：推送到 GitHub Pages
+
+将 HTML 文件复制到本地 repo 并推送：
+
+```bash
+cp "C:/Users/irisding/.claude/skills/us-ccs-weekly-performance/weekly_report_{start_date}.html" \
+   "C:/Users/irisding/US-CCS-weekly-report/"
+
+cd "C:/Users/irisding/US-CCS-weekly-report"
+git add "weekly_report_{start_date}.html"
+git commit -m "Add US CCS weekly report {start_date} ~ {end_date}"
+git push origin main
 ```
-📊 US CCS Weekly Report｜{YYYY-MM-DD 当周日期}
 
-一、团队业绩
-{内容}
+**注意**：git remote 已配置为 SSH over 443（`git@github.com:irisding001/US-CCS-weekly-report.git`），公司网络下可直接推送，无需 VPN。
 
-二、团队运营
-【团队管理】
-{内容}
+推送成功后 GitHub Pages 地址：
+`https://irisding001.github.io/US-CCS-weekly-report/weekly_report_{start_date}.html`
 
-【招聘进展】
-{内容}
+### Step 6：发送飞书卡片通知
 
-三、AI 应用
-【AI 工具使用情况】
-{内容}
+通过 `lark-im` skill，以 **bot 身份**（`--as bot`）、**`--profile us-ccs`** 发送 interactive card 给 `irisding`（us-ccs app open_id: `ou_423989c914515582660dfef99848b0e7`）：
 
-【AI 应用计划】
-{内容}
-
-四、下周计划
-{内容}
+```json
+{
+  "config": {"wide_screen_mode": true},
+  "header": {
+    "title": {"tag": "plain_text", "content": "📊 US CCS Weekly Report 已更新 | {start_MM_DD} ~ {end_MM_DD}"},
+    "template": "blue"
+  },
+  "elements": [
+    {
+      "tag": "action",
+      "actions": [
+        {
+          "tag": "button",
+          "text": {"tag": "plain_text", "content": "点击查看完整报告"},
+          "type": "primary",
+          "url": "https://irisding001.github.io/US-CCS-weekly-report/weekly_report_{start_date}.html"
+        }
+      ]
+    }
+  ]
+}
 ```
 
-2. 询问用户："以上内容确认无误吗？确认后我将发送到飞书群。如需修改，请告诉我哪个板块。"
-
-3. 用户确认后，询问目标群名称（如用户未提前说明）。
-
-4. 调用 `lark-im` skill 将消息发送到指定飞书群。
+命令示例：
+```bash
+lark-cli --profile us-ccs im +messages-send \
+  --user-id ou_423989c914515582660dfef99848b0e7 \
+  --as bot \
+  --msg-type interactive \
+  --content '{...card json...}'
+```
 
 ---
 
 ## 注意事项
 
-- 每次只问一个子项，等用户回复后再继续，不要一次性抛出所有问题。
-- 用户可以随时说"跳过"跳过某个子项，留空处理。
-- 日期使用当周周五日期，或用户填写时的当天日期。
-- 此 skill 可被其他 skill 嵌入调用，调用时直接从板块一开始执行。
+- 日期使用当周**周一**日期作为文件名
+- 历史趋势数据：优先从上一份 `weekly_report_*.html` 的 DATA 数组读取，追加当周数据
+- 若上周数据缺失，向用户确认后手动填入
+- GitHub Pages 更新有 1~2 分钟延迟，推送成功后稍等再刷新链接
+- irisding open_id（**us-ccs app**）：`ou_423989c914515582660dfef99848b0e7`（已固定，无需每次查询）
+- 卡片用 **button** 元素（非 lark_md 链接），URL 指向具体 HTML 文件名
+- HTML 样式：section-label 蓝色大字（15px #1456F0），sub-title 蓝色粗体，正文列表黑色（#333）
+- 根路径 `index.html` 已部署，自动跳转最新报告
