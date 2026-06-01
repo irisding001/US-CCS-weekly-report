@@ -9,7 +9,7 @@ description: US CCS 团队周报生成器。自动拉取业绩数据，引导用
 
 ## HTML 模板规范
 
-生成文件命名：`weekly_report_{YYYY-MM-DD}.html`（日期取当周周一）
+生成文件命名：`weekly_report_{YYYY-MM-DD}.html`（日期取**下周周一**，即报告提交日。例：报告周期 05-25~05-31，文件名用 2026-06-01）
 保存路径：`C:/Users/irisding/.claude/skills/us-ccs-weekly-performance/`
 
 ### 卡片结构
@@ -153,7 +153,7 @@ lark-cli --profile us-ccs im +messages-send \
 
 ## 注意事项
 
-- 日期使用当周**周一**日期作为文件名
+- 日期使用**下周周一**作为文件名（= 报告周期结束次日，即提交日）
 - 历史趋势数据：优先从上一份 `weekly_report_*.html` 的 DATA 数组读取，追加当周数据
 - 若上周数据缺失，向用户确认后手动填入
 - GitHub Pages 更新有 1~2 分钟延迟，推送成功后稍等再刷新链接
