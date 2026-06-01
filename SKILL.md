@@ -16,7 +16,7 @@ description: US CCS 团队周报生成器。自动拉取业绩数据，引导用
 
 ```
 Header：US CCS Weekly Report- Irisding | 日期范围 | Week N
-Compare Strip：与上周对比（总跟进量 / 总有效跟进量 / 总PC 的 ▲▼%）
+Compare Strip：与上周对比（总跟进量 / 总有效跟进量 / 总PC ▲▼%）+ Q2季度总PC（独立卡片，4/1~本周日累计）
 数据表格：跟进量（总跟进量、有效跟进量、总PC）+ 新 Leads 转化率（有效跟进率、跟进转化率、有效跟进转化率）
 趋势图：团队近6周转化率趋势（3条折线：有效跟进率 / 有效跟进转化率 / 跟进转化率）
 二、团队运营（团队管理 + 招聘进展）
@@ -34,6 +34,19 @@ Compare Strip：与上周对比（总跟进量 / 总有效跟进量 / 总PC 的 
 - 趋势图 Y 轴：`min: 0, max: 35`；3条线颜色：蓝 `#1456F0` / 橙 `#f59e0b` / 绿 `#10b981`
 - 周期格式：`MM-DD~MM-DD`（周一到周日，6 周）
 
+### Q2 季度总PC
+
+- **定义**：自 4月1日起至本周日，团队总转化有资产数（外呼+SMS去重），即 `intervened_transferred_num` 字段
+- **数据来源**：Source A API，日期范围改为 `start_date=每年04-01` / `end_date=本周周日`
+- **展示位置**：Compare Strip 第4个卡片（总PC 右侧），不做环比，只显示累计数值
+- **CSS 样式**：`.cmp.q2` — 橙色边框/背景，值用 `#ff8c00`
+  ```css
+  .cmp.q2 { border-color: #ffd899; background: #fffaf0; }
+  .cmp.q2 .val { color: #ff8c00; }
+  ```
+- **Compare Strip 布局**：`grid-template-columns: repeat(4, 1fr)`（原来3列改为4列）
+- **底部 note** 补充说明：`Q2季度总PC：4/1~{end_date}累计（外呼+SMS去重）`
+
 ### WEEKS 数组规则
 
 每周必须是**周一到周日**，例：
@@ -50,14 +63,18 @@ const WEEKS = ['04-13~04-19','04-20~04-26','04-27~05-03','05-04~05-10','05-11~05
 询问用户提供：
 - Cookie 字符串（含 `EGG_SESS`、`csrfToken`）
 - CSRF Token
-- uIdToken（BI Dashboard JWT）
+- uIdToken（BI Dashboard JWT，**可选**；若无则跳过转化率，或用户手动填写）
 - 确认日期范围（默认上一完整周，周一~周日）
 
 ### Step 2：调用 `us-ccs-weekly-performance` skill
 
 执行完整数据拉取流程，获得：
 - 跟进量数据（3人 + 团队合计，含与上周对比）
-- 新 Leads 个人转化率（有效跟进率 / 跟进转化率 / 有效跟进转化率）
+- **Q2季度总PC**：额外调用 Source A，日期范围 `20260401~{end_date}`，取团队 `intervened_transferred_num` 加总
+- 新 Leads 个人转化率（有效跟进率 / 跟进转化率 / 有效跟进转化率）— 需 uIdToken
+
+> **网络提示**：Python urllib 在部分 VPN 环境下 SSL 握手超时，改用 `curl` + `py` 解析 JSON 可绕过。
+> 拉取顺序：先拉本周 → 上周 → Q2累计，每次单独请求避免连接超时。
 
 ### Step 3：收集文字板块（二/三/四）
 
